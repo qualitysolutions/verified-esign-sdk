@@ -115,9 +115,29 @@ def test_list_files(client: VerifiedClient, respx_mock: Any) -> None:
     assert len(files) == 1 and files[0].file_type == "document" and files[0].file_id
 
 
+def test_download_signed_finds_the_sealed_file_in_the_file_list(client: VerifiedClient, respx_mock: Any) -> None:
+    """Live 2026-10-21: ``signedFile`` stays empty; the sealed PDF is the ``signedDocument`` file."""
+    respx_mock.get(f"{BASE}/envelopes/{ENV}/documents/{DOC}").mock(return_value=httpx.Response(200, json={
+        "id": DOC, "signed": True, "signedFile": None}))
+    respx_mock.get(f"{BASE}/envelopes/{ENV}/documents/{DOC}/files").mock(return_value=httpx.Response(200, json=[
+        {"uid": f"/envelopes/{ENV}/documents/{DOC}/files/ORIG", "fileType": "document", "name": "Avtal.pdf",
+         "uploadedAt": "2026-10-21T14:00:00Z"},
+        {"uid": f"/envelopes/{ENV}/documents/{DOC}/files/OLD", "fileType": "signedDocument",
+         "name": "Avtal.pades.pdf", "uploadedAt": "2026-10-21T15:00:00Z"},
+        {"uid": f"/envelopes/{ENV}/documents/{DOC}/files/SEAL", "fileType": "signedDocument",
+         "name": "Avtal.pades.pdf", "uploadedAt": "2026-10-21T15:15:00Z"},
+    ]))
+    url_route = respx_mock.get(f"{BASE}/envelopes/{ENV}/documents/{DOC}/files/SEAL/url").mock(
+        return_value=httpx.Response(200, json={"url": "https://s3.example.com/sealed.pdf?X-Amz-Signature=abc"}))
+    respx_mock.get("https://s3.example.com/sealed.pdf").mock(return_value=httpx.Response(200, content=PDF))
+    assert client.documents.download_signed(ENV, DOC) == PDF
+    assert url_route.called, "the latest signedDocument, not the original upload"
+
+
 def test_download_signed_uses_presigned_url_without_auth(client: VerifiedClient, respx_mock: Any) -> None:
     respx_mock.get(f"{BASE}/envelopes/{ENV}/documents/{DOC}").mock(return_value=httpx.Response(200, json={
         "id": DOC, "signed": True, "signedFile": {"uid": f"/envelopes/{ENV}/documents/{DOC}/files/F9"}}))
+    respx_mock.get(f"{BASE}/envelopes/{ENV}/documents/{DOC}/files").mock(return_value=httpx.Response(200, json=[]))
     url_route = respx_mock.get(f"{BASE}/envelopes/{ENV}/documents/{DOC}/files/F9/url").mock(
         return_value=httpx.Response(200, json={"url": "https://s3.example.com/signed.pdf?X-Amz-Signature=abc"}))
     s3 = respx_mock.get("https://s3.example.com/signed.pdf").mock(return_value=httpx.Response(200, content=PDF))
@@ -129,6 +149,8 @@ def test_download_signed_uses_presigned_url_without_auth(client: VerifiedClient,
 def test_download_signed_before_completion(client: VerifiedClient, respx_mock: Any) -> None:
     respx_mock.get(f"{BASE}/envelopes/{ENV}/documents/{DOC}").mock(
         return_value=httpx.Response(200, json={"id": DOC, "signed": False}))
+    respx_mock.get(f"{BASE}/envelopes/{ENV}/documents/{DOC}/files").mock(
+        return_value=live_response("get_envelopes_ID_documents_ID_files.json"))  # only the uploaded document
     with pytest.raises(VerifiedError, match="no signed file yet"):
         client.documents.download_signed(ENV, DOC)
 

@@ -9,6 +9,7 @@ only in the ``Location`` header; the SDK hands back a :class:`Created`.
 from __future__ import annotations
 
 import builtins
+from datetime import datetime, timezone
 import json
 from collections.abc import AsyncIterator, Iterator, Mapping
 from pathlib import Path
@@ -107,13 +108,25 @@ def _remind_body(recipient_id: str, greeting: str | None) -> dict[str, Any]:
     return body
 
 
-def _signed_file_id(document: Document) -> str:
-    if document.signed_file is None or not document.signed_file.file_id:
-        raise VerifiedError(
-            f"Document {document.id} has no signed file yet (signed={document.signed}); "
-            "wait for the envelope to complete"
-        )
-    return document.signed_file.file_id
+#: The sealed (signed) PDF's ``fileType`` in a document's file list (live 2026-10-21; named
+#: ``<name>.pades.pdf``).
+SIGNED_FILE_TYPE = "signedDocument"
+
+
+def _signed_file_id(document: Document, files: builtins.list[FileRef]) -> str:
+    """The sealed PDF's file id. Live 2026-10-21 ``signedFile`` stays empty on a signed
+    document; the sealed PDF is the ``signedDocument`` file in its file list (latest wins).
+    ``signedFile`` is still honoured if Verified ever fills it."""
+    sealed = [f for f in files if f.file_type == SIGNED_FILE_TYPE and f.file_id]
+    if sealed:
+        latest = max(sealed, key=lambda f: (f.uploaded_at or f.created or datetime.min.replace(tzinfo=timezone.utc)))
+        return str(latest.file_id)
+    if document.signed_file is not None and document.signed_file.file_id:
+        return document.signed_file.file_id
+    raise VerifiedError(
+        f"Document {document.id} has no signed file yet (signed={document.signed}); "
+        "wait for the envelope to complete"
+    )
 
 
 # -- sync ------------------------------------------------------------------------------
@@ -211,8 +224,9 @@ class Documents:
         return self._t.fetch_presigned(self.file_url(envelope_id, document_id, file_id))
 
     def download_signed(self, envelope_id: str, document_id: str) -> bytes:
-        """The signed PDF. Raises :class:`VerifiedError` until every recipient has signed."""
-        return self.download(envelope_id, document_id, _signed_file_id(self.get(envelope_id, document_id)))
+        """The signed (sealed) PDF. Raises :class:`VerifiedError` until every recipient has signed."""
+        file_id = _signed_file_id(self.get(envelope_id, document_id), self.list_files(envelope_id, document_id))
+        return self.download(envelope_id, document_id, file_id)
 
 
 class Recipients:
@@ -328,7 +342,8 @@ class AsyncDocuments:
 
     async def download_signed(self, envelope_id: str, document_id: str) -> bytes:
         document = await self.get(envelope_id, document_id)
-        return await self.download(envelope_id, document_id, _signed_file_id(document))
+        files = await self.list_files(envelope_id, document_id)
+        return await self.download(envelope_id, document_id, _signed_file_id(document, files))
 
 
 class AsyncRecipients:

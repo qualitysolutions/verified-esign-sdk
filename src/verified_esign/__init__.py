@@ -68,7 +68,7 @@ from .webhooks import (
     WebhookVerifier,
 )
 
-__version__ = "2026.10.21.2"
+__version__ = "2026.10.21.3"
 
 # Silent unless the host app configures a handler. The SDK logs to "verified_esign" at
 # DEBUG (method, path, status, timing) and WARNING (retries), and never logs credentials,
