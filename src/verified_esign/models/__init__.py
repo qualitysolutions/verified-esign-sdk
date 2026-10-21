@@ -15,6 +15,7 @@ from .envelopes import (
     RecipientRole,
     RecipientUpdate,
     Role,
+    Sender,
     SigningMethod,
     UserInfo,
 )
@@ -22,5 +23,5 @@ from .envelopes import (
 __all__ = [
     "ReadModel", "WriteModel", "id_from_uid", "make_tag", "validate_tag",
     "Created", "Document", "DocumentCreate", "Envelope", "EnvelopeSettings", "FileRef", "Person",
-    "Recipient", "RecipientCreate", "RecipientRole", "RecipientUpdate", "Role", "SigningMethod", "UserInfo",
+    "Recipient", "RecipientCreate", "RecipientRole", "RecipientUpdate", "Role", "Sender", "SigningMethod", "UserInfo",
 ]

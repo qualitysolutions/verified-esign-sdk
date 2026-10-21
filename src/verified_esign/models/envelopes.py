@@ -61,6 +61,19 @@ class Person(ReadModel):
     namespace: str | None = None
 
 
+class Sender(WriteModel):
+    """Who an envelope is sent from, when not the API user (``POST .../envelopes`` ``sender``).
+
+    In Verified's OpenAPI spec but not in its guides: whether Verified honours it, and
+    whether the person must be a user of the company, is checked by the live integration
+    test (``test_sender_override``), not assumed.
+    """
+
+    email: str
+    given_name: str
+    family_name: str
+
+
 # -- recipients -----------------------------------------------------------------------
 class RecipientRole(WriteModel):
     """What a recipient does. The default descriptor has ``signer``/``sign`` and

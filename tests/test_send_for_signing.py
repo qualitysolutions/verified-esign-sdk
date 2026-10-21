@@ -114,3 +114,11 @@ def test_bad_tag_rejected_before_anything_is_created(client: VerifiedClient, res
     with pytest.raises(ValueError, match="Invalid Verified tag"):
         client.send_for_signing(("A.pdf", PDF), [SIGNER], tags=["Bygg Dialog AB"])
     assert not routes["create"].called
+
+
+def test_sender_reaches_the_envelope(client: VerifiedClient, respx_mock: Any) -> None:
+    from verified_esign import Sender
+    routes = _mock_flow(respx_mock)
+    client.send_for_signing(("A.pdf", PDF), [SIGNER], publish=False,
+                            sender=Sender(email="saljare@qls.se", given_name="Sven", family_name="Säljare"))
+    assert json.loads(routes["create"].calls.last.request.content)["sender"]["email"] == "saljare@qls.se"

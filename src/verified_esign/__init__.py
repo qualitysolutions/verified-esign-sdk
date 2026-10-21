@@ -53,6 +53,7 @@ from .models import (
     RecipientRole,
     RecipientUpdate,
     Role,
+    Sender,
     SigningMethod,
     UserInfo,
     make_tag,
@@ -67,7 +68,7 @@ from .webhooks import (
     WebhookVerifier,
 )
 
-__version__ = "2026.10.21.1"
+__version__ = "2026.10.21.2"
 
 # Silent unless the host app configures a handler. The SDK logs to "verified_esign" at
 # DEBUG (method, path, status, timing) and WARNING (retries), and never logs credentials,
@@ -80,7 +81,7 @@ __all__ = [
     "SentEnvelope", "SigningDocument",
     # models
     "Created", "Document", "DocumentCreate", "Envelope", "EnvelopeSettings", "FileRef", "Person",
-    "Recipient", "RecipientCreate", "RecipientRole", "RecipientUpdate", "Role", "SigningMethod", "UserInfo",
+    "Recipient", "RecipientCreate", "RecipientRole", "RecipientUpdate", "Role", "Sender", "SigningMethod", "UserInfo",
     "make_tag", "validate_tag",
     # webhooks
     "WebhookVerifier", "WebhookMessage", "WebhookEvent", "WebhookResource", "EVENT_SIGNED", "EVENT_TYPES",

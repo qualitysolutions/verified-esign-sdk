@@ -32,6 +32,13 @@ Draft flow end to end with a real company account; recordings sanitized into
 - `GET /query-new/envelopes` filter/paging semantics (the call itself works; see above)
 - Webhook delivery (needs the webhook registered in the web app)
 
+## Open: sender on create
+
+`POST /envelope-descriptors/{id}/envelopes` takes `{"sender": {email, givenName, familyName}}`
+per the OpenAPI spec (not in the guides). Without it the envelope's `sender` is the API user
+(seen live). Whether Verified honours another sender, and whether it must be a user of the
+company, is what `tests/integration/test_live.py::test_sender_override` finds out.
+
 ## Behaviour the SDK encodes
 
 - **IP lock**: tokens only work from the IP that logged in, unless `POST /auth?withoutIpLock=1`.
