@@ -1,0 +1,12 @@
+.venv/
+__pycache__/
+*.py[cod]
+*.egg-info/
+.mypy_cache/
+.pytest_cache/
+build/
+dist/
+.env
+
+# Raw recordings from scripts/record_fixtures.py before sanitizing (contain PII).
+tests/fixtures/raw/
