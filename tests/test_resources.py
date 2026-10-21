@@ -245,3 +245,22 @@ def test_invalid_tags_rejected_locally(bad: str) -> None:
 def test_duplicate_tags_collapsed() -> None:
     from verified_esign import DocumentCreate
     assert DocumentCreate(name="a.pdf", tags=["acme-ab", "acme-ab", "naas"]).tags == ["acme-ab", "naas"]
+
+
+@pytest.mark.parametrize("given,sent", [
+    ({"field": "documents.tags", "op": "in", "value": ["acme-ab"]},
+     {"and": [{"field": "documents.tags", "op": "in", "value": ["acme-ab"]}]}),
+    ({"or": [{"field": "completed", "op": "eq", "value": True}]},
+     {"or": [{"field": "completed", "op": "eq", "value": True}]}),
+])
+def test_bare_filter_statement_is_wrapped(client: VerifiedClient, respx_mock: Any,
+                                          given: dict[str, Any], sent: dict[str, Any]) -> None:
+    """Live 2026-10-21: Verified silently ignores a filter whose root is not and/or/nor."""
+    route = respx_mock.get(f"{BASE}/query-new/envelopes").mock(return_value=httpx.Response(200, json=[]))
+    client.envelopes.query(given)
+    assert json.loads(parse_qs(urlsplit(str(route.calls.last.request.url)).query)["filters"][0]) == sent
+
+
+def test_filter_without_field_or_group_rejected(client: VerifiedClient) -> None:
+    with pytest.raises(ValueError, match="statement"):
+        client.envelopes.query({"op": "eq"})

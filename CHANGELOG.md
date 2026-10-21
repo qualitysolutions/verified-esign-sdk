@@ -18,6 +18,9 @@ CalVer `YYYY.M.D[.N]`, like the other QLS SDKs.
   that every hit carries the tag (the filter really filters).
 
 ### Fixed
+- `envelopes.query`/`iter`: a bare `{"field","op","value"}` filter is wrapped in
+  `{"and": [...]}`, the only form Verified documents. Live, a bare tag filter returned
+  untagged envelopes (looked ignored, no error).
 - `Recipient.order` is a float when read: live envelopes hold fractional orders (`100.5`)
   and one such envelope failed `envelopes.query` for the whole page. Found live.
 
