@@ -12,6 +12,7 @@ import httpx
 from ._transport import AsyncTransport, Response, SyncTransport
 from .config import Config
 from .models.envelopes import DocumentCreate, EnvelopeSettings, RecipientCreate, UserInfo
+from .models.tags import validate_tag
 from .resources import (
     AsyncDocuments,
     AsyncEnvelopes,
@@ -136,13 +137,16 @@ class VerifiedClient:
         """Create an envelope, upload the PDF(s), add recipients and publish it.
 
         ``documents`` is a :class:`SigningDocument` (PDF + attachments), a ``(name, pdf)``
-        tuple, or a list of either; file content is bytes or a path.
+        tuple, or a list of either; file content is bytes or a path. ``tags`` are set on
+        every document and validated locally; build them with :func:`make_tag`, e.g.
+        ``tags=[make_tag(customer_name)]`` so the company's contracts are searchable.
         With ``publish=False`` the envelope stays a draft and nobody is notified. If a step
         fails before publishing, the half-built draft is deleted and the error re-raised.
         """
         docs = _documents_arg(documents)
         if not recipients:
             raise ValueError("At least one recipient is required")
+        tag_list = [validate_tag(t) for t in tags] if tags else None
         envelope_id = self.envelopes.create().id
         try:
             if settings is not None:
@@ -152,7 +156,7 @@ class VerifiedClient:
             attachment_ids: dict[str, list[str]] = {}
             for doc in docs:
                 doc_id = self.documents.create(
-                    envelope_id, DocumentCreate(name=doc.name, tags=list(tags) if tags else None)).id
+                    envelope_id, DocumentCreate(name=doc.name, tags=tag_list)).id
                 file_ids[doc_id] = self.documents.upload(envelope_id, doc_id, doc.content, name=doc.name)
                 attachment_ids[doc_id] = [
                     self.documents.upload(envelope_id, doc_id, content, name=name, file_type="attachment")
@@ -226,6 +230,7 @@ class AsyncVerifiedClient:
         docs = _documents_arg(documents)
         if not recipients:
             raise ValueError("At least one recipient is required")
+        tag_list = [validate_tag(t) for t in tags] if tags else None
         envelope_id = (await self.envelopes.create()).id
         try:
             if settings is not None:
@@ -235,7 +240,7 @@ class AsyncVerifiedClient:
             attachment_ids: dict[str, list[str]] = {}
             for doc in docs:
                 doc_id = (await self.documents.create(
-                    envelope_id, DocumentCreate(name=doc.name, tags=list(tags) if tags else None))).id
+                    envelope_id, DocumentCreate(name=doc.name, tags=tag_list))).id
                 file_ids[doc_id] = await self.documents.upload(envelope_id, doc_id, doc.content, name=doc.name)
                 attachment_ids[doc_id] = [
                     await self.documents.upload(envelope_id, doc_id, content, name=name, file_type="attachment")

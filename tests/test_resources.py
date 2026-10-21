@@ -207,12 +207,60 @@ def test_query_shape_differs_from_get(client: VerifiedClient, respx_mock: Any) -
         "id": ENV, "descriptor": "default", "flow": "/flows/default", "published": True,
         "documents": [{"id": DOC, "descriptor": "1", "signed": True,
                        "signedFile": f"/envelopes/{ENV}/documents/{DOC}/files/F9"}],
-        "recipients": [{"id": "R1", "role": "signer", "notifications": {
+        "recipients": [{"id": "R1", "role": "signer", "order": 100.5, "notifications": {
             "N1": {"id": "N1", "date": "2026-10-21T12:00:00Z", "status": "delivered"}}}],
     }]))
     env = client.envelopes.query(limit=1)[0]
     assert env.descriptor == "default" and env.status == "pending"
     assert env.documents[0].signed_file is not None and env.documents[0].signed_file.file_id == "F9"
     r = env.recipients[0]
+    assert r.order == 100.5  # live: fractional order from web-app reordering
     assert r.role_name == "signer" and r.notifications == [
         {"id": "N1", "date": "2026-10-21T12:00:00Z", "status": "delivered"}]
+
+
+@pytest.mark.parametrize("name,tag", [
+    ("Bygg Dialog AB", "bygg-dialog-ab"),
+    ("Ölands Åkeri & Bär AB", "olands-akeri-bar-ab"),
+    ("  QLS quality solutions AB ", "qls-quality-solutions-ab"),
+    ("Café Måne", "cafe-mane"),
+    ("H&M", "h-m"),
+    ("556000-0000", "556000-0000"),
+])
+def test_make_tag(name: str, tag: str) -> None:
+    from verified_esign import make_tag
+    assert make_tag(name) == tag
+
+
+@pytest.mark.parametrize("bad", ["AB", "ab", "Bygg Dialog", "bygg dialog", "-abc", "abc-", "åkeri"])
+def test_invalid_tags_rejected_locally(bad: str) -> None:
+    from verified_esign import DocumentCreate, make_tag
+    with pytest.raises(ValueError):
+        DocumentCreate(name="a.pdf", tags=[bad])
+    if bad in ("AB", "ab"):
+        with pytest.raises(ValueError, match="at least 3"):
+            make_tag(bad)
+
+
+def test_duplicate_tags_collapsed() -> None:
+    from verified_esign import DocumentCreate
+    assert DocumentCreate(name="a.pdf", tags=["acme-ab", "acme-ab", "naas"]).tags == ["acme-ab", "naas"]
+
+
+@pytest.mark.parametrize("given,sent", [
+    ({"field": "documents.tags", "op": "in", "value": ["acme-ab"]},
+     {"and": [{"field": "documents.tags", "op": "in", "value": ["acme-ab"]}]}),
+    ({"or": [{"field": "completed", "op": "eq", "value": True}]},
+     {"or": [{"field": "completed", "op": "eq", "value": True}]}),
+])
+def test_bare_filter_statement_is_wrapped(client: VerifiedClient, respx_mock: Any,
+                                          given: dict[str, Any], sent: dict[str, Any]) -> None:
+    """Live 2026-10-21: Verified silently ignores a filter whose root is not and/or/nor."""
+    route = respx_mock.get(f"{BASE}/query-new/envelopes").mock(return_value=httpx.Response(200, json=[]))
+    client.envelopes.query(given)
+    assert json.loads(parse_qs(urlsplit(str(route.calls.last.request.url)).query)["filters"][0]) == sent
+
+
+def test_filter_without_field_or_group_rejected(client: VerifiedClient) -> None:
+    with pytest.raises(ValueError, match="statement"):
+        client.envelopes.query({"op": "eq"})

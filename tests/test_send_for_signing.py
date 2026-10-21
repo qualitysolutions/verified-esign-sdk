@@ -99,3 +99,18 @@ async def test_async_send(async_client: AsyncVerifiedClient, respx_mock: Any) ->
     sent = await async_client.send_for_signing(
         SigningDocument("Avtal.pdf", PDF, attachments=[("Bilaga.pdf", PDF)]), [SIGNER])
     assert sent.attachment_ids == {"D1": ["F2"]} and routes["publish"].called
+
+
+def test_company_tag_on_every_document(client: VerifiedClient, respx_mock: Any) -> None:
+    from verified_esign import make_tag
+    routes = _mock_flow(respx_mock)
+    client.send_for_signing([("A.pdf", PDF), ("B.pdf", PDF)], [SIGNER], tags=[make_tag("Bygg Dialog AB")])
+    assert [json.loads(c.request.content)["tags"] for c in routes["doc"].calls] == [
+        ["bygg-dialog-ab"], ["bygg-dialog-ab"]]
+
+
+def test_bad_tag_rejected_before_anything_is_created(client: VerifiedClient, respx_mock: Any) -> None:
+    routes = _mock_flow(respx_mock)
+    with pytest.raises(ValueError, match="Invalid Verified tag"):
+        client.send_for_signing(("A.pdf", PDF), [SIGNER], tags=["Bygg Dialog AB"])
+    assert not routes["create"].called

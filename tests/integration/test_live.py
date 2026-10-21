@@ -7,11 +7,12 @@ envelope (never published, so nobody is notified) and deletes it again.
 from __future__ import annotations
 
 import os
+import time
 from collections.abc import Iterator
 
 import pytest
 
-from verified_esign import EnvelopeSettings, RecipientCreate, SigningDocument, VerifiedClient
+from verified_esign import Envelope, EnvelopeSettings, RecipientCreate, SigningDocument, VerifiedClient, make_tag
 
 pytestmark = [
     pytest.mark.integration,
@@ -64,6 +65,7 @@ def test_draft_roundtrip(verified: VerifiedClient) -> None:
         [RecipientCreate(given_name=me.given_name or "Test", family_name=me.family_name or "Signer",
                          email=me.email or "test@example.com")],
         settings=EnvelopeSettings(greeting="qls-verified-esign live test - not published"),
+        tags=[make_tag("SDK Live Test AB")],
         publish=False,
     )
     try:
@@ -73,6 +75,20 @@ def test_draft_roundtrip(verified: VerifiedClient) -> None:
         assert [r.id for r in envelope.recipients] == sent.recipient_ids
         kinds = sorted(f.file_type or "" for f in verified.documents.list_files(sent.envelope_id, sent.document_ids[0]))
         assert kinds == ["attachment", "document"]
+        assert verified.documents.get(sent.envelope_id, sent.document_ids[0]).tags == ["sdk-live-test-ab"]
+        # Newest first, and give the asynchronously updated search index a moment.
+        by_tag: list[Envelope] = []
+        for _ in range(10):
+            by_tag = verified.envelopes.query(
+                {"field": "documents.tags", "op": "in", "value": ["sdk-live-test-ab"]},
+                limit=100, sort={"created": -1})
+            if sent.envelope_id in [e.id for e in by_tag]:
+                break
+            time.sleep(1.5)
+        assert sent.envelope_id in [e.id for e in by_tag]
+        # The filter must actually filter: every hit carries the tag (not just "all envelopes").
+        untagged = [e.id for e in by_tag if not any("sdk-live-test-ab" in d.tags for d in e.documents)]
+        assert not untagged, f"documents.tags filter returned {len(untagged)} untagged envelope(s)"
         assert any(e.id == sent.envelope_id for e in verified.envelopes.query(
             {"field": "published", "op": "eq", "value": False}, limit=100, sort={"created": -1}))
     finally:

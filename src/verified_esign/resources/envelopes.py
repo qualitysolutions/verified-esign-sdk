@@ -54,10 +54,25 @@ def _query_params(filters: Mapping[str, Any] | None, offset: int, limit: int,
         raise ValueError(f"limit must be between 1 and {MAX_QUERY_LIMIT}")
     params = {"from": str(offset), "limit": str(limit)}
     if filters:
-        params["filters"] = json.dumps(filters, separators=(",", ":"), default=str)
+        params["filters"] = json.dumps(_logical_root(filters), separators=(",", ":"), default=str)
     if sort:
         params["sort"] = json.dumps(dict(sort), separators=(",", ":"))
     return params
+
+
+_LOGICAL_KEYS = frozenset({"and", "or", "nor"})
+
+
+def _logical_root(filters: Mapping[str, Any]) -> dict[str, Any]:
+    """Give the filter an ``and``/``or``/``nor`` root, the only form Verified's docs show.
+    Live 2026-10-21 a bare ``{"field", "op", "value"}`` tag filter returned untagged
+    envelopes, i.e. it looked ignored; wrapping it in ``{"and": [...]}`` is the fix
+    being verified by the integration test."""
+    if set(filters) & _LOGICAL_KEYS:
+        return dict(filters)
+    if "field" in filters:
+        return {"and": [dict(filters)]}
+    raise ValueError("filters must be a {'field','op','value'} statement or an and/or/nor group")
 
 
 def _sign_link_body(recipient_id: str, redirect_to: str | None) -> dict[str, Any]:
@@ -128,7 +143,10 @@ class Envelopes:
               sort: Mapping[str, int] | None = None) -> list[Envelope]:
         """Search envelopes (``GET /query-new/envelopes``). ``filters`` uses Verified's
         Mongo-like syntax, e.g. ``{"and": [{"field": "completed", "op": "eq", "value": True}]}``;
-        ``sort`` e.g. ``{"modified": -1}``. Only this endpoint computes ``expired`` live."""
+        a single bare statement is wrapped in ``and`` (Verified ignores it otherwise).
+        ``sort`` e.g. ``{"modified": -1}``. Only this endpoint computes ``expired`` live.
+        The search index is updated asynchronously, so a just-created envelope may take a
+        moment to appear."""
         response = self._t.request("GET", "/query-new/envelopes",
                                    params=_query_params(filters, offset, limit, sort))
         return [Envelope.model_validate(e) for e in as_list(response)]

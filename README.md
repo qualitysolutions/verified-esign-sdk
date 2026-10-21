@@ -24,7 +24,7 @@ Requires Python 3.10+. Depends on `httpx` and `pydantic>=2`.
 ## Quick start: send a contract for signing
 
 ```python
-from verified_esign import EnvelopeSettings, RecipientCreate, SigningDocument, VerifiedClient
+from verified_esign import EnvelopeSettings, RecipientCreate, SigningDocument, VerifiedClient, make_tag
 
 with VerifiedClient() as verified:  # reads VERIFIED_* environment variables
     sent = verified.send_for_signing(
@@ -37,7 +37,7 @@ with VerifiedClient() as verified:  # reads VERIFIED_* environment variables
             RecipientCreate(given_name="Erik", family_name="Eriksson", email="erik@qls.se", order=2),
         ],
         settings=EnvelopeSettings(greeting="Hej! Här är avtalet för signering.", automatic_reminders=2),
-        tags=["naas-avtal"],
+        tags=[make_tag("Bygg Dialog AB")],   # -> "bygg-dialog-ab"
     )
     print(sent.envelope_id)
 ```
@@ -51,6 +51,20 @@ Recipients default to Swedish BankID (`bankid-se`), `sv_SE` and the `signer` rol
 methods: `bankid-no`, `nets-eident-fi`, `nets-eident-dk`, `eideasy-*`, `email`, `sms`,
 `touch-sign` (eIDs must be enabled for your company by Verified). Set `ssn=` to require
 that the eID matches a specific personnummer.
+
+### Tags
+
+Document tags make contracts searchable in the Verified archive and through
+`envelopes.query`. Verified requires lowercase, no spaces, at least 3 characters;
+`make_tag()` builds one from any display value (diacritics folded, `"Ölands Åkeri AB"` ->
+`"olands-akeri-ab"`) and invalid tags are rejected before anything is created. QARP tags
+every contract with the customer company:
+
+```python
+for envelope in verified.envelopes.iter(
+        {"field": "documents.tags", "op": "in", "value": [make_tag("Bygg Dialog AB")]}):
+    print(envelope.id, envelope.status)
+```
 
 ### Attachments (bilagor)
 
