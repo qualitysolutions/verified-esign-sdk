@@ -216,3 +216,31 @@ def test_query_shape_differs_from_get(client: VerifiedClient, respx_mock: Any) -
     r = env.recipients[0]
     assert r.role_name == "signer" and r.notifications == [
         {"id": "N1", "date": "2026-10-21T12:00:00Z", "status": "delivered"}]
+
+
+@pytest.mark.parametrize("name,tag", [
+    ("Bygg Dialog AB", "bygg-dialog-ab"),
+    ("Ölands Åkeri & Bär AB", "olands-akeri-bar-ab"),
+    ("  QLS quality solutions AB ", "qls-quality-solutions-ab"),
+    ("Café Måne", "cafe-mane"),
+    ("H&M", "h-m"),
+    ("556000-0000", "556000-0000"),
+])
+def test_make_tag(name: str, tag: str) -> None:
+    from verified_esign import make_tag
+    assert make_tag(name) == tag
+
+
+@pytest.mark.parametrize("bad", ["AB", "ab", "Bygg Dialog", "bygg dialog", "-abc", "abc-", "åkeri"])
+def test_invalid_tags_rejected_locally(bad: str) -> None:
+    from verified_esign import DocumentCreate, make_tag
+    with pytest.raises(ValueError):
+        DocumentCreate(name="a.pdf", tags=[bad])
+    if bad in ("AB", "ab"):
+        with pytest.raises(ValueError, match="at least 3"):
+            make_tag(bad)
+
+
+def test_duplicate_tags_collapsed() -> None:
+    from verified_esign import DocumentCreate
+    assert DocumentCreate(name="a.pdf", tags=["acme-ab", "acme-ab", "naas"]).tags == ["acme-ab", "naas"]

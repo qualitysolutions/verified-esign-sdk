@@ -12,6 +12,7 @@ from typing import Any, ClassVar, Literal
 from pydantic import Field, field_validator
 
 from .common import ReadModel, WriteModel
+from .tags import validate_tag
 
 #: Signing methods offered by the default envelope descriptor (live, 2026-10-21).
 SigningMethod = Literal[
@@ -155,8 +156,16 @@ class DocumentCreate(WriteModel):
     name: str
     source: str = "file"
     descriptor: dict[str, Any] = Field(default_factory=lambda: {"hash": 1})
-    #: Archive tags: lowercase, no spaces, at least 3 characters.
+    #: Archive/search tags: lowercase, no spaces, at least 3 characters. Build them with
+    #: :func:`make_tag` (e.g. the customer company: ``make_tag("Bygg Dialog AB")``).
     tags: list[str] | None = None
+
+    @field_validator("tags")
+    @classmethod
+    def _valid_tags(cls, value: list[str] | None) -> list[str] | None:
+        if value is None:
+            return None
+        return list(dict.fromkeys(validate_tag(t) for t in value))
 
 
 class FileRef(ReadModel):

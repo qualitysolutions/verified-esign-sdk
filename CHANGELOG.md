@@ -5,6 +5,17 @@ All notable changes to `qls-verified-esign` are documented here.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); versions are
 CalVer `YYYY.M.D[.N]`, like the other QLS SDKs.
 
+## [2026.10.21.1] - 2026-10-21
+
+### Added
+- `make_tag(value)`: turns a display value (e.g. the customer company name) into a valid
+  Verified tag - lowercase, ASCII-folded (å/ä -> a, ö -> o), runs of other characters ->
+  `-`. `validate_tag(tag)` checks one.
+- `DocumentCreate.tags` and `send_for_signing(tags=...)` are validated locally (Verified:
+  lowercase, no spaces, >= 3 chars) and de-duplicated; `send_for_signing` rejects a bad tag
+  before creating anything.
+- Live integration test tags its draft and finds it again via `documents.tags`.
+
 ## [2026.10.21] - 2026-10-21
 
 First release.

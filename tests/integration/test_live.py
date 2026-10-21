@@ -11,7 +11,7 @@ from collections.abc import Iterator
 
 import pytest
 
-from verified_esign import EnvelopeSettings, RecipientCreate, SigningDocument, VerifiedClient
+from verified_esign import EnvelopeSettings, RecipientCreate, SigningDocument, VerifiedClient, make_tag
 
 pytestmark = [
     pytest.mark.integration,
@@ -64,6 +64,7 @@ def test_draft_roundtrip(verified: VerifiedClient) -> None:
         [RecipientCreate(given_name=me.given_name or "Test", family_name=me.family_name or "Signer",
                          email=me.email or "test@example.com")],
         settings=EnvelopeSettings(greeting="qls-verified-esign live test - not published"),
+        tags=[make_tag("SDK Live Test AB")],
         publish=False,
     )
     try:
@@ -73,6 +74,10 @@ def test_draft_roundtrip(verified: VerifiedClient) -> None:
         assert [r.id for r in envelope.recipients] == sent.recipient_ids
         kinds = sorted(f.file_type or "" for f in verified.documents.list_files(sent.envelope_id, sent.document_ids[0]))
         assert kinds == ["attachment", "document"]
+        assert verified.documents.get(sent.envelope_id, sent.document_ids[0]).tags == ["sdk-live-test-ab"]
+        by_tag = verified.envelopes.query(
+            {"field": "documents.tags", "op": "in", "value": ["sdk-live-test-ab"]}, limit=100)
+        assert sent.envelope_id in [e.id for e in by_tag]
         assert any(e.id == sent.envelope_id for e in verified.envelopes.query(
             {"field": "published", "op": "eq", "value": False}, limit=100, sort={"created": -1}))
     finally:
