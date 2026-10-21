@@ -82,11 +82,15 @@ class WebhookResource(ReadModel):
 
     @property
     def envelope_id(self) -> str | None:
-        """The envelope this event is about (``resource.type == "envelope"``)."""
-        if self.type in (None, "envelope"):
-            return self.id
+        """The envelope this event is about: from ``uid`` first, then ``id``.
+
+        Live 2026-10-21: ``sealedDocument.attached`` arrives with ``type: "envelope"`` but
+        ``id`` = the sealed FILE's id and ``uid`` = ``/envelopes/<E>/documents/<D>/files/<F>``,
+        so ``id`` alone points at the wrong thing."""
         match = re.match(r"^/envelopes/([^/]+)", self.uid or "")
-        return match.group(1) if match else None
+        if match:
+            return match.group(1)
+        return self.id if self.type in (None, "envelope") else None
 
 
 class WebhookEvent(ReadModel):

@@ -75,6 +75,17 @@ def test_valid_notification(verifier: WebhookVerifier, version: str) -> None:
     assert msg.event.resource.namespace == NAMESPACE and msg.event.resource.version == 56441
 
 
+def test_sealed_event_points_at_the_envelope_through_uid(verifier: WebhookVerifier) -> None:
+    """Live 2026-10-21: sealedDocument.attached carries the sealed FILE's id with type "envelope"."""
+    msg = notification()
+    event = json.loads(msg["Message"])
+    event["resource"].update(type="envelope", id="YTAm3gnb7PMRSyqj",
+                             uid="/envelopes/rJGoS8U2Gg/documents/BJGsBLLhGg/files/YTAm3gnb7PMRSyqj")
+    msg["Message"] = json.dumps(event)
+    parsed = verifier.verify(body(sign(msg)), now=NOW.timestamp())
+    assert parsed.event is not None and parsed.event.resource.envelope_id == "rJGoS8U2Gg"
+
+
 def test_certificate_is_cached(verifier: WebhookVerifier, respx_mock: Any) -> None:
     for _ in range(3):
         verifier.verify(body(sign(notification())), now=NOW.timestamp())

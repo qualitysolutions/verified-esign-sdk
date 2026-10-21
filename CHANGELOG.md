@@ -5,6 +5,17 @@ All notable changes to `qls-verified-esign` are documented here.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); versions are
 CalVer `YYYY.M.D[.N]`, like the other QLS SDKs.
 
+## [2026.10.21.3] - 2026-10-21
+
+### Fixed (found on the first real signed envelope)
+- `documents.download_signed` always raised "no signed file yet": live, a signed document's
+  `signedFile` stays empty and the sealed PDF is the `signedDocument` file in
+  `GET .../documents/{id}/files` (named `<name>.pades.pdf`). It now picks the latest
+  `signedDocument` file, and still honours `signedFile` if Verified fills it.
+- `WebhookResource.envelope_id`: `sealedDocument.attached` arrives with `type: "envelope"`
+  but `id` = the sealed file's id; the envelope is now read from `uid` first
+  (`/envelopes/<E>/documents/<D>/files/<F>`), then `id`.
+
 ## [2026.10.21.2] - 2026-10-21
 
 ### Added

@@ -25,6 +25,14 @@ Draft flow end to end with a real company account; recordings sanitized into
 | `POST .../files/attachment` | 200 `{"id"}`; listed with `fileType: "attachment"` | |
 | `GET /query-new/envelopes` | 200 array; **`descriptor` is a bare id string** (`"default"`), not the object `GET /envelopes/{id}` embeds | spec types it as string |
 
+## Seen on the first real signed envelope (2026-10-21)
+
+- The sealed PDF is NOT in the document's `signedFile` (stays empty) but in its file list:
+  `fileType: "signedDocument"`, name `<name>.pades.pdf`.
+- `sealedDocument.attached` webhook: `resource.type` is `"envelope"` but `resource.id` is
+  the sealed file's id; the envelope id is in `resource.uid`
+  (`/envelopes/<E>/documents/<D>/files/<F>`).
+
 ## Not yet verified live (needs a published envelope)
 
 - `PUT /publish-status`, `jobs/get.sign.link`, `jobs/send.notification`, `abort-status`, `trash-status`
