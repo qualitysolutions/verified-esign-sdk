@@ -1,0 +1,6 @@
+{
+  "request": "POST /envelopes/BybGMzXL2zl/recipients",
+  "status": 200,
+  "location": "/api/envelopes/BybGMzXL2zl/recipients/BJ-QMz7UhGe",
+  "body": null
+}

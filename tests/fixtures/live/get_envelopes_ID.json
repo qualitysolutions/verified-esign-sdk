@@ -1,0 +1,199 @@
+{
+  "request": "GET /envelopes/BybGMzXL2zl",
+  "status": 200,
+  "location": null,
+  "body": {
+    "id": "BybGMzXL2zl",
+    "uid": "/envelopes/BybGMzXL2zl",
+    "version": 4,
+    "flow": {
+      "id": "/flows/default",
+      "name": "/flows/default"
+    },
+    "descriptor": {
+      "id": "default",
+      "uid": "/descriptors/default",
+      "flow": {
+        "id": "/flows/default",
+        "name": "/flows/default"
+      },
+      "name": "Default",
+      "roles": [
+        {
+          "roleName": "signer",
+          "numMin": 1,
+          "numMax": 100,
+          "action": {
+            "methods": [
+              "bankid-se",
+              "bankid-no",
+              "touch-sign",
+              "bankid-dk",
+              "email",
+              "nets-esign-no",
+              "nets-esign-se",
+              "nets-esign-dk",
+              "nets-esign-tupas",
+              "sms",
+              "nets-eident-fi",
+              "nets-eident-mobiilivarmenne",
+              "nets-eident-dk",
+              "eideasy-ee-id",
+              "eideasy-lv-id",
+              "eideasy-lt-id",
+              "eideasy-be-id"
+            ],
+            "type": "sign"
+          }
+        },
+        {
+          "roleName": "reviewer",
+          "numMin": 0,
+          "numMax": 100,
+          "action": {
+            "methods": [
+              "email"
+            ],
+            "type": "review"
+          }
+        }
+      ],
+      "documents": [
+        {
+          "type": "file",
+          "roles": [],
+          "numMin": 1,
+          "numMax": 10,
+          "hash": 1,
+          "attachments": [
+            {
+              "numMin": 0,
+              "numMax": 20,
+              "label": "Attachment"
+            }
+          ]
+        }
+      ],
+      "defaultValues": {
+        "signer": {
+          "order": 100000
+        },
+        "reviewer": {
+          "order": 100
+        }
+      },
+      "public": false,
+      "i18n": {
+        "sv_SE": {
+          "description": "Ladda upp en PDF eller fler, ange mottagare och skicka för signering",
+          "name": "Standardflöde"
+        },
+        "nb_NO": {
+          "description": "Last opp et dokument, angi mottakerne og be dem om å signere det",
+          "name": "Standard flyt"
+        },
+        "en_EN": {
+          "description": "Upload a document, set the recipients and request them to sign it",
+          "name": "Default flow"
+        },
+        "fi_FI": {
+          "description": "Lisää dokumentit, täytä allekirjoittajien tiedot ja lähetä",
+          "name": "Oletustyönkulku"
+        },
+        "da_DK": {
+          "description": "Upload et dokument, angiv modtagerne og anmod dem om at underskrive det",
+          "name": "Standardflow"
+        },
+        "de_DE": {
+          "description": "Laden Sie ein Dokument hoch, legen Sie die Empfänger fest und bitten Sie sie, es zu unterschreiben",
+          "name": "Standardprozess"
+        },
+        "fr_FR": {
+          "description": "Téléchargez un document, définissez les destinataires et demandez-leur de le signer",
+          "name": "Flux par défaut"
+        }
+      }
+    },
+    "sender": {
+      "uid": "/companies/COMPANY1/users/USER1",
+      "givenName": "Test",
+      "familyName": "Testsson",
+      "namespace": "/companies/COMPANY1",
+      "email": "signer@example.com"
+    },
+    "documents": [
+      {
+        "id": "BylfMfQL2fg",
+        "uid": "/envelopes/BybGMzXL2zl/documents/BylfMfQL2fg",
+        "namespace": "/envelopes/BybGMzXL2zl",
+        "version": 3,
+        "descriptor": {
+          "type": "file",
+          "roles": [],
+          "numMin": 1,
+          "numMax": 10,
+          "hash": 1,
+          "attachments": [
+            {
+              "numMin": 0,
+              "numMax": 20,
+              "label": "Attachment"
+            }
+          ]
+        },
+        "source": "file",
+        "template": {
+          "version": -1,
+          "published": false,
+          "completed": false,
+          "aborted": false
+        },
+        "name": "QLS-API-draft-test.pdf",
+        "aborted": false,
+        "completed": false,
+        "rejected": false,
+        "signed": false,
+        "trashed": false,
+        "created": "2026-10-21T11:29:14.458Z"
+      }
+    ],
+    "recipients": [
+      {
+        "id": "BJ-QMz7UhGe",
+        "uid": "/envelopes/BybGMzXL2zl/recipients/BJ-QMz7UhGe",
+        "namespace": "/envelopes/BybGMzXL2zl",
+        "version": 4,
+        "givenName": "Test",
+        "familyName": "Testsson",
+        "email": "signer@example.com",
+        "role": {
+          "name": "signer",
+          "action": "sign"
+        },
+        "display": {
+          "signing": "DISPLAY_BIRTHDATE",
+          "signingOnCheckout": "DISPLAY_BIRTHDATE"
+        },
+        "signingMethod": "bankid-se",
+        "notificationMethod": "email",
+        "language": "sv_SE",
+        "demandAttachment": false,
+        "notified": false,
+        "completed": false,
+        "order": 1
+      }
+    ],
+    "greeting": "QLS API draft test - not published",
+    "lastError": null,
+    "published": false,
+    "completed": false,
+    "aborted": false,
+    "trashed": false,
+    "sequentialSigning": true,
+    "expired": false,
+    "expiration": "2026-10-28T23:59:59.999Z",
+    "automaticReminders": 0,
+    "created": "2026-10-21T11:29:14.018Z",
+    "modified": "2026-10-21T11:29:15.000Z"
+  }
+}
