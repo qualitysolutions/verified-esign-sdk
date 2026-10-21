@@ -78,6 +78,9 @@ def test_draft_roundtrip(verified: VerifiedClient) -> None:
         by_tag = verified.envelopes.query(
             {"field": "documents.tags", "op": "in", "value": ["sdk-live-test-ab"]}, limit=100)
         assert sent.envelope_id in [e.id for e in by_tag]
+        # The filter must actually filter: every hit carries the tag (not just "all envelopes").
+        untagged = [e.id for e in by_tag if not any("sdk-live-test-ab" in d.tags for d in e.documents)]
+        assert not untagged, f"documents.tags filter returned {len(untagged)} untagged envelope(s)"
         assert any(e.id == sent.envelope_id for e in verified.envelopes.query(
             {"field": "published", "op": "eq", "value": False}, limit=100, sort={"created": -1}))
     finally:

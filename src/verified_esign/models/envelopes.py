@@ -126,7 +126,9 @@ class Recipient(ReadModel):
     signing_method: str | None = None
     notification_method: str | None = None
     language: str | None = None
-    order: int | None = None
+    #: Signing order. Live data holds fractions (e.g. ``100.5``, a recipient inserted between
+    #: two others in the web app), so it is a float when read.
+    order: float | None = None
     notified: bool = False
     completed: bool = False
     #: Delivery log. ``/query-new`` returns an object keyed by notification id; it is

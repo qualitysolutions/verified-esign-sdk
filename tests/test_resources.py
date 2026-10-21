@@ -207,13 +207,14 @@ def test_query_shape_differs_from_get(client: VerifiedClient, respx_mock: Any) -
         "id": ENV, "descriptor": "default", "flow": "/flows/default", "published": True,
         "documents": [{"id": DOC, "descriptor": "1", "signed": True,
                        "signedFile": f"/envelopes/{ENV}/documents/{DOC}/files/F9"}],
-        "recipients": [{"id": "R1", "role": "signer", "notifications": {
+        "recipients": [{"id": "R1", "role": "signer", "order": 100.5, "notifications": {
             "N1": {"id": "N1", "date": "2026-10-21T12:00:00Z", "status": "delivered"}}}],
     }]))
     env = client.envelopes.query(limit=1)[0]
     assert env.descriptor == "default" and env.status == "pending"
     assert env.documents[0].signed_file is not None and env.documents[0].signed_file.file_id == "F9"
     r = env.recipients[0]
+    assert r.order == 100.5  # live: fractional order from web-app reordering
     assert r.role_name == "signer" and r.notifications == [
         {"id": "N1", "date": "2026-10-21T12:00:00Z", "status": "delivered"}]
 

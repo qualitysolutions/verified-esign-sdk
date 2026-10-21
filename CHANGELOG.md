@@ -14,7 +14,12 @@ CalVer `YYYY.M.D[.N]`, like the other QLS SDKs.
 - `DocumentCreate.tags` and `send_for_signing(tags=...)` are validated locally (Verified:
   lowercase, no spaces, >= 3 chars) and de-duplicated; `send_for_signing` rejects a bad tag
   before creating anything.
-- Live integration test tags its draft and finds it again via `documents.tags`.
+- Live integration test tags its draft, finds it again via `documents.tags` and checks
+  that every hit carries the tag (the filter really filters).
+
+### Fixed
+- `Recipient.order` is a float when read: live envelopes hold fractional orders (`100.5`)
+  and one such envelope failed `envelopes.query` for the whole page. Found live.
 
 ## [2026.10.21] - 2026-10-21
 
