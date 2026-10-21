@@ -1,0 +1,8 @@
+{
+  "request": "POST /envelopes/BybGMzXL2zl/documents/BylfMfQL2fg/files/document",
+  "status": 200,
+  "location": null,
+  "body": {
+    "id": "gRkK9FHLQMfxOYmj"
+  }
+}

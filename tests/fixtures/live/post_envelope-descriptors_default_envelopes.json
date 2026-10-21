@@ -1,0 +1,8 @@
+{
+  "request": "POST /envelope-descriptors/default/envelopes",
+  "status": 201,
+  "location": "/api/envelopes/BybGMzXL2zl",
+  "body": {
+    "uid": "/envelopes/BybGMzXL2zl"
+  }
+}

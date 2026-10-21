@@ -1,0 +1,36 @@
+{
+  "request": "GET /envelopes/BybGMzXL2zl/documents/BylfMfQL2fg/files",
+  "status": 200,
+  "location": null,
+  "body": [
+    {
+      "storagePath": "envelopes/BybGMzXL2zl/documents/BylfMfQL2fg/files/gRkK9FHLQMfxOYmj",
+      "namespace": "/envelopes/BybGMzXL2zl/documents/BylfMfQL2fg",
+      "owners": [
+        {
+          "uid": "/companies/COMPANY1/users/USER1",
+          "givenName": "Test",
+          "familyName": "Testsson",
+          "email": "signer@example.com",
+          "_id": "000000000000000000000000",
+          "id": "000000000000000000000000"
+        },
+        {
+          "uid": "/system",
+          "_id": "000000000000000000000000",
+          "id": "000000000000000000000000"
+        },
+        {
+          "uid": "/companies/COMPANY1",
+          "_id": "000000000000000000000000",
+          "id": "000000000000000000000000"
+        }
+      ],
+      "name": "QLS-API-draft-test.pdf",
+      "fileType": "document",
+      "created": "2026-10-21T11:29:14.757Z",
+      "uploadedAt": "2026-10-21T11:29:14.757Z",
+      "uid": "/envelopes/BybGMzXL2zl/documents/BylfMfQL2fg/files/gRkK9FHLQMfxOYmj"
+    }
+  ]
+}

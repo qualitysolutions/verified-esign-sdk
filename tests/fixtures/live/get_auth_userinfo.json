@@ -1,0 +1,32 @@
+{
+  "request": "GET /auth/userinfo",
+  "status": 200,
+  "location": null,
+  "body": {
+    "confirmed": true,
+    "confirmedEmails": [
+      "signer@example.com"
+    ],
+    "email": "signer@example.com",
+    "enabled": true,
+    "familyName": "Testsson",
+    "givenName": "Test",
+    "metadata": {
+      "language": "sv_SE"
+    },
+    "uid": "/users/USER1",
+    "namespace": "",
+    "id": "USER1",
+    "roles": [
+      {
+        "name": "/roles/admin/companies/COMPANY1",
+        "label": "Example AB admin users."
+      },
+      {
+        "name": "/users/USER1",
+        "label": "User Testsson Test"
+      }
+    ],
+    "validated": true
+  }
+}
