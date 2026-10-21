@@ -5,6 +5,14 @@ All notable changes to `qls-verified-esign` are documented here.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); versions are
 CalVer `YYYY.M.D[.N]`, like the other QLS SDKs.
 
+## [2026.10.21.2] - 2026-10-21
+
+### Added
+- `Sender` and `sender=` on `envelopes.create()` / `send_for_signing()`: who the envelope is
+  sent from instead of the API user (`POST .../envelopes` `sender`, in Verified's OpenAPI
+  spec but not its guides). Live integration test `test_sender_override` reports whether
+  Verified honours, ignores or refuses it.
+
 ## [2026.10.21.1] - 2026-10-21
 
 ### Added

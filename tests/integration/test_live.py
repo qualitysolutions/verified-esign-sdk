@@ -12,7 +12,8 @@ from collections.abc import Iterator
 
 import pytest
 
-from verified_esign import Envelope, EnvelopeSettings, RecipientCreate, SigningDocument, VerifiedClient, make_tag
+from verified_esign import (APIStatusError, Envelope, EnvelopeSettings, RecipientCreate, Sender, SigningDocument,
+                            VerifiedClient, make_tag)
 
 pytestmark = [
     pytest.mark.integration,
@@ -93,3 +94,34 @@ def test_draft_roundtrip(verified: VerifiedClient) -> None:
             {"field": "published", "op": "eq", "value": False}, limit=100, sort={"created": -1}))
     finally:
         verified.envelopes.delete(sent.envelope_id)
+
+
+def _sender_from_env() -> Sender:
+    """VERIFIED_TEST_SENDER="Förnamn Efternamn <e-post>" - ideally another user of the same
+    Verified company. Default: a person who is NOT a Verified user, to see whether Verified
+    accepts any sender or only its own users."""
+    raw = os.getenv("VERIFIED_TEST_SENDER", "SDK Avsändartest <sdk-sender-test@example.com>")
+    name, _, email = raw.partition("<")
+    given, _, family = name.strip().rpartition(" ")
+    return Sender(email=email.strip(" >"), given_name=given or name.strip(), family_name=family or "-")
+
+
+def test_sender_override(verified: VerifiedClient) -> None:
+    """Does Verified honour ``sender`` on create (in its spec, not its guides)? A DRAFT only,
+    deleted again - nobody is notified. The failure message says what Verified did."""
+    me = verified.userinfo()
+    sender = _sender_from_env()
+    try:
+        created = verified.envelopes.create(sender=sender)
+    except APIStatusError as exc:
+        pytest.fail(f"Verified REFUSED the sender {sender.email}: HTTP {exc.status_code} {exc.body!r}")
+    try:
+        envelope = verified.envelopes.get(created.id)
+        got = envelope.sender.email if envelope.sender else None
+        print(f"\nsender requested: {sender.email}; Verified recorded: {got} "
+              f"({envelope.sender.given_name if envelope.sender else None} "
+              f"{envelope.sender.family_name if envelope.sender else None}); API user: {me.email}")
+        assert got is not None and got.lower() == sender.email.lower(), (
+            f"Verified IGNORED the sender: it recorded {got!r} (the API user is {me.email!r})")
+    finally:
+        verified.envelopes.delete(created.id)

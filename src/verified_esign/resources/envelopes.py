@@ -25,6 +25,7 @@ from ..models.envelopes import (
     Recipient,
     RecipientCreate,
     RecipientUpdate,
+    Sender,
 )
 from ..errors import VerifiedError
 from ._base import (
@@ -42,6 +43,10 @@ from ._base import (
 
 #: Largest page ``GET /query-new/envelopes`` returns.
 MAX_QUERY_LIMIT = 100
+
+
+def _create_body(sender: Sender | None) -> dict[str, Any]:
+    return {"sender": sender.to_body()} if sender is not None else {}
 
 
 def _comment(comment: str | None) -> dict[str, Any]:
@@ -116,9 +121,11 @@ class Envelopes:
     def __init__(self, transport: SyncTransport) -> None:
         self._t = transport
 
-    def create(self, *, descriptor: str = "default") -> Created:
-        """Create an empty draft envelope from an envelope descriptor."""
-        return created(self._t.request("POST", f"/envelope-descriptors/{seg(descriptor)}/envelopes", json={}))
+    def create(self, *, descriptor: str = "default", sender: Sender | None = None) -> Created:
+        """Create an empty draft envelope from an envelope descriptor. ``sender`` names who it
+        is sent from; without it Verified uses the API user."""
+        return created(self._t.request("POST", f"/envelope-descriptors/{seg(descriptor)}/envelopes",
+                                       json=_create_body(sender)))
 
     def get(self, envelope_id: str) -> Envelope:
         return Envelope.model_validate(self._t.request("GET", envelope_path(envelope_id)).body)
@@ -245,8 +252,9 @@ class AsyncEnvelopes:
     def __init__(self, transport: AsyncTransport) -> None:
         self._t = transport
 
-    async def create(self, *, descriptor: str = "default") -> Created:
-        return created(await self._t.request("POST", f"/envelope-descriptors/{seg(descriptor)}/envelopes", json={}))
+    async def create(self, *, descriptor: str = "default", sender: Sender | None = None) -> Created:
+        return created(await self._t.request("POST", f"/envelope-descriptors/{seg(descriptor)}/envelopes",
+                                             json=_create_body(sender)))
 
     async def get(self, envelope_id: str) -> Envelope:
         return Envelope.model_validate((await self._t.request("GET", envelope_path(envelope_id))).body)

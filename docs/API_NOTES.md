@@ -32,6 +32,15 @@ Draft flow end to end with a real company account; recordings sanitized into
 - `GET /query-new/envelopes` filter/paging semantics (the call itself works; see above)
 - Webhook delivery (needs the webhook registered in the web app)
 
+## Sender on create (verified live 2026-10-21, drafts)
+
+`POST /envelope-descriptors/{id}/envelopes` takes `{"sender": {email, givenName, familyName}}`
+(OpenAPI spec, not the guides). Without it the envelope's `sender` is the API user. With it,
+Verified records the sender **exactly as given, without validation**: a non-user and an
+arbitrary address were both accepted (`test_sender_override`). So the API user can stay a
+service account while the seller is the sender. Not yet seen: what a published envelope's
+e-mails show and where completion notices go - always pass the seller's real e-mail.
+
 ## Behaviour the SDK encodes
 
 - **IP lock**: tokens only work from the IP that logged in, unless `POST /auth?withoutIpLock=1`.

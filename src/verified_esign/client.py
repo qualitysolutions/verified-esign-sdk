@@ -11,7 +11,7 @@ import httpx
 
 from ._transport import AsyncTransport, Response, SyncTransport
 from .config import Config
-from .models.envelopes import DocumentCreate, EnvelopeSettings, RecipientCreate, UserInfo
+from .models.envelopes import DocumentCreate, EnvelopeSettings, RecipientCreate, Sender, UserInfo
 from .models.tags import validate_tag
 from .resources import (
     AsyncDocuments,
@@ -133,6 +133,7 @@ class VerifiedClient:
         settings: EnvelopeSettings | None = None,
         tags: Sequence[str] | None = None,
         publish: bool = True,
+        sender: Sender | None = None,
     ) -> SentEnvelope:
         """Create an envelope, upload the PDF(s), add recipients and publish it.
 
@@ -140,6 +141,7 @@ class VerifiedClient:
         tuple, or a list of either; file content is bytes or a path. ``tags`` are set on
         every document and validated locally; build them with :func:`make_tag`, e.g.
         ``tags=[make_tag(customer_name)]`` so the company's contracts are searchable.
+        ``sender`` names who the envelope is sent from (default: the API user).
         With ``publish=False`` the envelope stays a draft and nobody is notified. If a step
         fails before publishing, the half-built draft is deleted and the error re-raised.
         """
@@ -147,7 +149,7 @@ class VerifiedClient:
         if not recipients:
             raise ValueError("At least one recipient is required")
         tag_list = [validate_tag(t) for t in tags] if tags else None
-        envelope_id = self.envelopes.create().id
+        envelope_id = self.envelopes.create(sender=sender).id
         try:
             if settings is not None:
                 self.envelopes.update(envelope_id, settings)
@@ -225,13 +227,14 @@ class AsyncVerifiedClient:
         settings: EnvelopeSettings | None = None,
         tags: Sequence[str] | None = None,
         publish: bool = True,
+        sender: Sender | None = None,
     ) -> SentEnvelope:
         """See :meth:`VerifiedClient.send_for_signing`."""
         docs = _documents_arg(documents)
         if not recipients:
             raise ValueError("At least one recipient is required")
         tag_list = [validate_tag(t) for t in tags] if tags else None
-        envelope_id = (await self.envelopes.create()).id
+        envelope_id = (await self.envelopes.create(sender=sender)).id
         try:
             if settings is not None:
                 await self.envelopes.update(envelope_id, settings)

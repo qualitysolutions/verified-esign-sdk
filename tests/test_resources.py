@@ -264,3 +264,14 @@ def test_bare_filter_statement_is_wrapped(client: VerifiedClient, respx_mock: An
 def test_filter_without_field_or_group_rejected(client: VerifiedClient) -> None:
     with pytest.raises(ValueError, match="statement"):
         client.envelopes.query({"op": "eq"})
+
+
+def test_create_with_a_sender(client: VerifiedClient, respx_mock: Any) -> None:
+    from verified_esign import Sender
+    route = respx_mock.post(f"{BASE}/envelope-descriptors/default/envelopes").mock(
+        return_value=live_response("post_envelope-descriptors_default_envelopes.json"))
+    client.envelopes.create(sender=Sender(email="saljare@qls.se", given_name="Sven", family_name="Säljare"))
+    assert json.loads(route.calls.last.request.content) == {
+        "sender": {"email": "saljare@qls.se", "givenName": "Sven", "familyName": "Säljare"}}
+    client.envelopes.create()
+    assert json.loads(route.calls.last.request.content) == {}, "no sender: the API user, as before"
