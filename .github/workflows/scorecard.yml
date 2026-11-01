@@ -13,6 +13,8 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
+      id-token: write
+      security-events: write
       actions: read
       # Scorecard reads commits, PRs, issues, check runs and statuses (needed on private repos).
       issues: read
@@ -28,7 +30,7 @@ jobs:
         with:
           results_file: scorecard.json
           results_format: json
-          publish_results: false
+          publish_results: true
       - name: Keep the report
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
