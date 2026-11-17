@@ -1,0 +1,39 @@
+name: Qodana
+on:
+  workflow_dispatch:
+  # Gate on PRs to main only (minutes-thrifty - push-to-branch scans are
+  # intentionally off). After merging a cleanup run
+  # `gh workflow run qodana_code_quality.yml --ref main` to refresh the
+  # Qodana Cloud dashboard, which defaults to the main branch.
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  qodana:
+    # Dependabot runs get no Actions secrets; the job is skipped for them,
+    # which a required check treats as passed (HP-46, same as group A).
+    if: github.actor != 'dependabot[bot]'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+      checks: write
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          fetch-depth: 0
+      # No skip when the token is missing: the scan must fail closed, so a
+      # required `qodana` check can never pass without an analysis.
+      - name: 'Qodana Scan'
+        uses: JetBrains/qodana-action@4861e015da555e86a72b862892aba6c2b93e6891 # v2026.1.3
+        with:
+          pr-mode: false
+          # CI-generated baseline: findings that existed when the check was
+          # introduced are accepted; only NEW problems fail (failThreshold: 0).
+          args: --baseline,qodana.sarif.json
+          upload-result: true
+        env:
+          QODANA_TOKEN: ${{ secrets.QODANA_TOKEN }}
+          QODANA_ENDPOINT: 'https://qodana.cloud'
