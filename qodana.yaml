@@ -1,0 +1,46 @@
+####################################################################################################################
+# WARNING: Do not store sensitive information in this file, as its contents will be included in the Qodana report. #
+####################################################################################################################
+
+version: "1.0"
+linter: jetbrains/qodana-python:2026.1
+# SC-1 gate: 0 problems allowed. This repo is at zero findings
+# (CI-verified on main 2026-08-03), so no baseline file is needed -
+# anything a PR introduces is a new finding and fails the check.
+# If a batch of pre-existing findings ever has to be accepted, commit
+# a CI-GENERATED qodana.sarif.json and add --baseline to the workflow
+# args; never generate that baseline from a local scan, because local
+# and CI resolve different type information and their fingerprints differ.
+failThreshold: 0
+profile:
+  name: qodana.recommended
+include:
+  - name: CheckDependencyLicenses
+exclude:
+  - name: All
+    paths:
+      - __pycache__
+      - .venv
+      - .qodana
+  # ---------------------------------------------------------------------
+  # Fleet-standard false positives. Each was investigated on cloud-qls-api
+  # or cloud-event-processor-webex before being excluded fleet-wide.
+  # ---------------------------------------------------------------------
+  # 2026.1 flags valid PEP 585/604 generics (list[str], X | None) inside
+  # Pydantic and TypedDict bodies as invalid type arguments. PyCharm, mypy
+  # and Pyright all accept them. Re-evaluate on the next linter line.
+  - name: PyTypeHintsInspection
+  # Deliberate cross-module underscore helpers, and tests exercising module
+  # internals - not third-party encapsulation violations.
+  - name: PyProtectedMemberInspection
+  # str()/f-string on Exception subclasses and pydantic models, both of
+  # which DO define __str__; this is a type-stub gap.
+  - name: PyStringConversionWithoutDunderMethodInspection
+  # SQLAlchemy uses `== None` for IS NULL - the correct ORM pattern.
+  - name: PyComparisonWithNoneInspection
+  # stdlib overrides and framework dispatch methods.
+  - name: PyMethodMayBeStaticInspection
+  - name: PyClassHasNoInitInspection
+  # False positives on async with blocks where all internal paths return.
+  - name: PyInconsistentReturnsInspection
+  - name: DuplicatedCode
